@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Detectar componente · IngeScan{% endblock %}
+
+{% block body %}
+<main class="page">
+  <header class="page-header">
+    <h1>Detección de componentes electrónicos</h1>
+    <p>Sube una imagen y nuestra IA identificará el componente y consultará su información técnica.</p>
+  </header>
+
+  <section class="card">
+    <h2 class="card-title">Subir imagen</h2>
+    <p class="card-subtitle">Formatos soportados: JPG, PNG, WEBP. Tamaño máximo 8 MB.</p>
+
+    <form method="POST" enctype="multipart/form-data" id="upload-form">
+      <label for="imagen-input" class="dropzone" id="dropzone" tabindex="0">
+        <div class="dropzone-icon" aria-hidden="true">↑</div>
+        <p class="dropzone-title">Arrastra una imagen o haz clic para seleccionar</p>
+        <p class="dropzone-text">Selecciona una foto clara del componente para mejores resultados.</p>
+        <p class="dropzone-filename" id="filename"></p>
+        <input type="file" id="imagen-input" name="imagen" accept="image/*" required hidden />
+      </label>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-lg" id="analyze-btn">
+          Analizar componente
+        </button>
+        <a href="{{ url_for('historial') }}" class="btn btn-secondary">Ver historial</a>
+      </div>
+    </form>
+  </section>
+
+  {% if componente %}
+  <section style="margin-top: 28px;">
+    <div class="detection-summary">
+      <div>
+        <span class="label">Componente detectado</span>
+        <h2>{{ componente }}</h2>
+      </div>
+      <div>
+        <span class="label">Confianza</span>
+        <span class="badge">{{ confianza }}%</span>
+      </div>
+    </div>
+
+    <div class="images-grid">
+      <figure class="image-frame">
+        <img src="{{ imagen_original }}" alt="Imagen original cargada por el usuario" />
+        <figcaption class="image-frame-caption">Imagen original</figcaption>
+      </figure>
+      <figure class="image-frame">
+        <img src="{{ imagen_procesada }}" alt="Imagen con detección del modelo de IA" />
+        <figcaption class="image-frame-caption">Detección del modelo</figcaption>
+      </figure>
+    </div>
+
+    {% if resultados %}
+    <div class="card">
+      <h2 class="card-title">Información del componente</h2>
+      <p class="card-subtitle">Datos obtenidos desde la API de Nexar (Octopart).</p>
+      <div class="results-grid">
+        {% for dato in resultados %}
+        <article class="result-card">
+          <h3 class="result-card-mpn">{{ dato.mpn }}</h3>
+          <p class="result-card-manufacturer">{{ dato.manufacturer }}</p>
+          <p class="result-card-row">
+            <strong>Descripción</strong>
+            {{ dato.descripcion }}
+          </p>
+          <p class="result-card-row">
+            <strong>Categoría</strong>
+            {{ dato.categoria }}
+          </p>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-state-icon">ⓘ</div>
+        <h3>Sin información adicional</h3>
+        <p>No se obtuvieron datos del proveedor para este componente.</p>
+      </div>
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+</main>
+
+<script>
+  const dropzone = document.getElementById('dropzone');
+  const input = document.getElementById('imagen-input');
+  const filenameLabel = document.getElementById('filename');
+  const analyzeBtn = document.getElementById('analyze-btn');
+  const form = document.getElementById('upload-form');
+
+  function updateFilename(file) {
+    if (!file) return;
+    filenameLabel.textContent = `Archivo seleccionado: ${file.name}`;
+  }
+
+  ['dragenter', 'dragover'].forEach(evt => {
+    dropzone.addEventListener(evt, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.add('is-active');
+    });
+  });
+  ['dragleave', 'drop'].forEach(evt => {
+    dropzone.addEventListener(evt, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove('is-active');
+    });
+  });
+
+  dropzone.addEventListener('drop', e => {
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      input.files = files;
+      updateFilename(files[0]);
+    }
+  });
+
+  input.addEventListener('change', () => {
+    if (input.files.length > 0) updateFilename(input.files[0]);
+  });
+
+  form.addEventListener('submit', () => {
+    analyzeBtn.disabled = true;
+    analyzeBtn.textContent = 'Analizando...';
+  });
+</script>
+{% endblock %}

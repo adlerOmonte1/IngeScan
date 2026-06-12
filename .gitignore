@@ -1,0 +1,33 @@
+# Entornos virtuales
+venv/
+env/
+ENV/
+.venv/
+
+# Cache de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Base de datos local
+*.sqlite3
+usuarios.db
+
+# Variables de entorno
+.env
+*.env
+!.env.example
+
+# Logs y temporales
+*.log
+static/uploads/
+
+# Editores y SO
+.vscode/
+.idea/
+.DS_Store
+
+# Modelo YOLO (es grande; en producción se monta o se descarga)
+# Coméntalo si prefieres versionar el modelo
+# best.pt

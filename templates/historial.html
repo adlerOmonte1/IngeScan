@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Historial · IngeScan{% endblock %}
+
+{% block body %}
+<main class="page">
+  <header class="page-header">
+    <h1>Historial de detecciones</h1>
+    <p>Componentes que has analizado anteriormente con IngeScan.</p>
+  </header>
+
+  <section class="card">
+    {% if historial %}
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Componente</th>
+            <th>MPN</th>
+            <th>Fabricante</th>
+            <th>Descripción</th>
+            <th>Categoría</th>
+            <th>Confianza</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in historial %}
+          <tr>
+            <td><strong>{{ item['componente'] }}</strong></td>
+            <td>{{ item['mpn'] or '—' }}</td>
+            <td>{{ item['fabricante'] or '—' }}</td>
+            <td class="cell-muted">{{ item['descripcion'] or '—' }}</td>
+            <td>{{ item['categoria'] or '—' }}</td>
+            <td>
+              {% if item['confianza'] is not none %}
+                <span class="badge">{{ (item['confianza'] * 100) | round(1) }}%</span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="cell-muted">{{ item['fecha'] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📭</div>
+      <h3>Aún no tienes detecciones</h3>
+      <p>Cuando analices un componente, aparecerá en esta lista.</p>
+      <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top: 16px;">Detectar un componente</a>
+    </div>
+    {% endif %}
+  </section>
+</main>
+{% endblock %}

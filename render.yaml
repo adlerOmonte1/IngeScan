@@ -1,0 +1,23 @@
+# Render.com Blueprint para IngeScan
+# Desplegar con: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: ingescan
+    runtime: docker
+    plan: standard
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_ENV
+        value: production
+      - key: NEXAR_CLIENT_ID
+        sync: false
+      - key: NEXAR_CLIENT_SECRET
+        sync: false
+      - key: CONFIDENCE_THRESHOLD
+        value: "0.80"
+    disk:
+      name: ingescan-data
+      mountPath: /app/data
+      sizeGB: 1
