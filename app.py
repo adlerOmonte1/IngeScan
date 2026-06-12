@@ -8,6 +8,18 @@ from __future__ import annotations
 
 import logging
 import os
+
+# ── Límites de hilos: deben fijarse ANTES de importar torch / numpy / cv2 ──
+# En un servidor con 0.15 vCPU, dejar que numpy/OpenCV/torch creen N threads
+# produce context-switching masivo. Un solo hilo por librería es más rápido.
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
+os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
+# Ultralytics config dir escribible (evita warning en /root de solo-lectura)
+os.environ.setdefault("YOLO_CONFIG_DIR", "/tmp/Ultralytics")
+
 import sqlite3
 import uuid
 from contextlib import contextmanager
@@ -54,9 +66,6 @@ def _writable_dir(*candidates: Path) -> Path:
     return fallback
 
 
-# Ultralytics necesita un directorio de configuración escribible.
-# En contenedores con FS de solo-lectura (/root no escribible), apuntamos a /tmp.
-os.environ.setdefault("YOLO_CONFIG_DIR", "/tmp/Ultralytics")
 Path(os.environ["YOLO_CONFIG_DIR"]).mkdir(parents=True, exist_ok=True)
 
 # Directorio de uploads: dentro de static si se puede, si no en /tmp.
@@ -64,6 +73,12 @@ UPLOAD_DIR = _writable_dir(STATIC_DIR / "uploads", Path("/tmp/ingescan/uploads")
 
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 MAX_CONTENT_LENGTH = 8 * 1024 * 1024  # 8 MB
+
+# Tamaño de inferencia: 320px → ~4× menos cómputo que 640px, suficiente para demo.
+# Subir a 416 si la precisión baja demasiado.
+YOLO_IMGSZ = int(os.environ.get("YOLO_IMGSZ", "320"))
+# Pre-escalar imágenes de entrada a este máximo para reducir I/O y preprocesado.
+MAX_IMAGE_PX = int(os.environ.get("MAX_IMAGE_PX", "640"))
 
 # Base de datos: respetar DATABASE_PATH si está definida, si no intentar BASE_DIR,
 # y como fallback /tmp para entornos con FS de solo lectura.
@@ -333,11 +348,31 @@ def create_app() -> Flask:
 
         filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
         original_path = UPLOAD_DIR / filename
-        file.save(original_path)
+
+        # ── Pre-escalar imagen: reduce tiempo de preprocesado y uso de RAM ──
+        try:
+            from PIL import Image as PilImage
+            img = PilImage.open(file.stream).convert("RGB")
+            img.thumbnail((MAX_IMAGE_PX, MAX_IMAGE_PX), PilImage.LANCZOS)
+            img.save(original_path, format="JPEG", quality=88)
+        except Exception as exc:
+            logger.exception("Error guardando imagen: %s", exc)
+            flash("No se pudo leer la imagen. Verifica el formato.", "error")
+            return redirect(url_for("index"))
 
         try:
             model = get_model()
-            detection = model(str(original_path))[0]
+            # imgsz=YOLO_IMGSZ → ~4× menos cómputo vs 640 por defecto.
+            # half=False → CPU no soporta FP16 de forma útil.
+            # verbose=False → evita logs costosos por inferencia.
+            results = model.predict(
+                source=str(original_path),
+                imgsz=YOLO_IMGSZ,
+                device="cpu",
+                half=False,
+                verbose=False,
+            )
+            detection = results[0]
             result_filename = f"result_{filename}"
             result_path = UPLOAD_DIR / result_filename
             detection.save(filename=str(result_path))
