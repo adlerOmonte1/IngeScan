@@ -3,29 +3,29 @@
 {% block navbar %}{% endblock %}
 
 {% block body %}
-<div class="auth-wrapper">
+<div class="auth-shell">
   <div class="auth-card">
     <div class="auth-brand">
-      <span class="brand-logo">I</span>
+      <span class="brand-mark">I</span>
       <span class="auth-brand-name">IngeScan</span>
     </div>
-    <h1 class="auth-title">Bienvenido de vuelta</h1>
-    <p class="auth-subtitle">Inicia sesión para detectar componentes electrónicos con IA.</p>
+    <h1>Iniciar sesión</h1>
+    <p class="lead-sm">Accede para identificar componentes electrónicos.</p>
 
     <form method="POST" novalidate>
-      <div class="field">
-        <label for="codigo">Código de estudiante</label>
-        <input type="text" id="codigo" name="codigo" placeholder="Ej. U20191234" required autocomplete="username" />
+      <div class="mb-3">
+        <label for="codigo" class="form-label">Código de estudiante</label>
+        <input type="text" id="codigo" name="codigo" class="form-control" placeholder="Ej. U20191234" required autocomplete="username">
       </div>
-      <div class="field">
-        <label for="password">Contraseña</label>
-        <input type="password" id="password" name="password" placeholder="Tu contraseña" required autocomplete="current-password" />
+      <div class="mb-3">
+        <label for="password" class="form-label">Contraseña</label>
+        <input type="password" id="password" name="password" class="form-control" required autocomplete="current-password">
       </div>
-      <button type="submit" class="btn btn-primary btn-block btn-lg">Ingresar</button>
+      <button type="submit" class="btn btn-brand w-100">Ingresar</button>
     </form>
 
-    <p class="auth-footer">
-      ¿Aún no tienes cuenta? <a href="{{ url_for('register') }}">Crear cuenta</a>
+    <p class="auth-foot">
+      ¿No tienes cuenta? <a href="{{ url_for('register') }}">Crear cuenta</a>
     </p>
   </div>
 </div>

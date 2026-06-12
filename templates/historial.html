@@ -3,51 +3,53 @@
 
 {% block body %}
 <main class="page">
-  <header class="page-header">
+  <div class="page-heading">
     <h1>Historial de detecciones</h1>
-    <p>Componentes que has analizado anteriormente con IngeScan.</p>
-  </header>
+    <p class="lead-sm">Componentes que has analizado anteriormente.</p>
+  </div>
 
-  <section class="card">
+  <section class="panel p-0">
     {% if historial %}
-    <div class="table-wrapper">
-      <table class="data-table">
+    <div class="table-responsive">
+      <table class="table data-table align-middle mb-0">
         <thead>
           <tr>
-            <th>Componente</th>
+            <th class="ps-3">Componente</th>
             <th>MPN</th>
             <th>Fabricante</th>
             <th>Descripción</th>
             <th>Categoría</th>
             <th>Confianza</th>
-            <th>Fecha</th>
+            <th class="pe-3">Fecha</th>
           </tr>
         </thead>
         <tbody>
           {% for item in historial %}
           <tr>
-            <td><strong>{{ item['componente'] }}</strong></td>
-            <td>{{ item['mpn'] or '—' }}</td>
+            <td class="ps-3 fw-semibold">{{ item['componente'] }}</td>
+            <td><code>{{ item['mpn'] or '—' }}</code></td>
             <td>{{ item['fabricante'] or '—' }}</td>
-            <td class="cell-muted">{{ item['descripcion'] or '—' }}</td>
+            <td class="text-muted">{{ item['descripcion'] or '—' }}</td>
             <td>{{ item['categoria'] or '—' }}</td>
             <td>
               {% if item['confianza'] is not none %}
-                <span class="badge">{{ (item['confianza'] * 100) | round(1) }}%</span>
+                <span class="conf-pill">{{ (item['confianza'] * 100) | round(1) }}%</span>
               {% else %}—{% endif %}
             </td>
-            <td class="cell-muted">{{ item['fecha'] }}</td>
+            <td class="pe-3 text-muted small">{{ item['fecha'] }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
     {% else %}
-    <div class="empty-state">
-      <div class="empty-state-icon">📭</div>
+    <div class="empty p-5">
+      <i class="bi bi-inbox"></i>
       <h3>Aún no tienes detecciones</h3>
-      <p>Cuando analices un componente, aparecerá en esta lista.</p>
-      <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top: 16px;">Detectar un componente</a>
+      <p>Cuando analices un componente, aparecerá aquí.</p>
+      <a href="{{ url_for('index') }}" class="btn btn-brand mt-2">
+        <i class="bi bi-camera"></i> Detectar componente
+      </a>
     </div>
     {% endif %}
   </section>

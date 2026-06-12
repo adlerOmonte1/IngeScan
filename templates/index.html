@@ -1,93 +1,100 @@
 {% extends "base.html" %}
-{% block title %}Detectar componente · IngeScan{% endblock %}
+{% block title %}Detectar · IngeScan{% endblock %}
 
 {% block body %}
 <main class="page">
-  <header class="page-header">
-    <h1>Detección de componentes electrónicos</h1>
-    <p>Sube una imagen y nuestra IA identificará el componente y consultará su información técnica.</p>
-  </header>
+  <div class="page-heading">
+    <h1>Detección de componentes</h1>
+    <p class="lead-sm">Sube una imagen del componente y el modelo identificará su tipo y datos técnicos.</p>
+  </div>
 
-  <section class="card">
-    <h2 class="card-title">Subir imagen</h2>
-    <p class="card-subtitle">Formatos soportados: JPG, PNG, WEBP. Tamaño máximo 8 MB.</p>
+  <section class="panel">
+    <h2 class="panel-title">Subir imagen</h2>
+    <p class="panel-sub">Formatos: JPG, PNG, WEBP. Máximo 8&nbsp;MB.</p>
 
     <form method="POST" enctype="multipart/form-data" id="upload-form">
       <label for="imagen-input" class="dropzone" id="dropzone" tabindex="0">
-        <div class="dropzone-icon" aria-hidden="true">↑</div>
-        <p class="dropzone-title">Arrastra una imagen o haz clic para seleccionar</p>
-        <p class="dropzone-text">Selecciona una foto clara del componente para mejores resultados.</p>
+        <i class="bi bi-cloud-arrow-up"></i>
+        <p class="dropzone-title">Arrastra una imagen o haz clic para seleccionarla</p>
+        <p class="dropzone-text">Usa una foto nítida del componente, con buena iluminación.</p>
         <p class="dropzone-filename" id="filename"></p>
-        <input type="file" id="imagen-input" name="imagen" accept="image/*" required hidden />
+        <input type="file" id="imagen-input" name="imagen" accept="image/*" required hidden>
       </label>
 
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary btn-lg" id="analyze-btn">
-          Analizar componente
+      <div class="d-flex flex-wrap gap-2 mt-3">
+        <button type="submit" class="btn btn-brand" id="analyze-btn">
+          <i class="bi bi-cpu"></i> Analizar componente
         </button>
-        <a href="{{ url_for('historial') }}" class="btn btn-secondary">Ver historial</a>
+        <a href="{{ url_for('historial') }}" class="btn btn-outline-brand">
+          <i class="bi bi-clock-history"></i> Ver historial
+        </a>
       </div>
     </form>
   </section>
 
   {% if componente %}
-  <section style="margin-top: 28px;">
-    <div class="detection-summary">
+  <section class="mt-4">
+    <div class="detection-banner">
       <div>
-        <span class="label">Componente detectado</span>
+        <span class="lbl">Componente detectado</span>
         <h2>{{ componente }}</h2>
       </div>
-      <div>
-        <span class="label">Confianza</span>
-        <span class="badge">{{ confianza }}%</span>
+      <div class="text-end">
+        <span class="lbl">Confianza</span>
+        <span class="conf-pill">{{ confianza }}%</span>
       </div>
     </div>
 
-    <div class="images-grid">
-      <figure class="image-frame">
-        <img src="{{ imagen_original }}" alt="Imagen original cargada por el usuario" />
-        <figcaption class="image-frame-caption">Imagen original</figcaption>
-      </figure>
-      <figure class="image-frame">
-        <img src="{{ imagen_procesada }}" alt="Imagen con detección del modelo de IA" />
-        <figcaption class="image-frame-caption">Detección del modelo</figcaption>
-      </figure>
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <figure class="image-frame mb-0">
+          <img src="{{ imagen_original }}" alt="Imagen original">
+          <figcaption>Imagen original</figcaption>
+        </figure>
+      </div>
+      <div class="col-md-6">
+        <figure class="image-frame mb-0">
+          <img src="{{ imagen_procesada }}" alt="Detección del modelo">
+          <figcaption>Detección del modelo</figcaption>
+        </figure>
+      </div>
     </div>
 
-    {% if resultados %}
-    <div class="card">
-      <h2 class="card-title">Información del componente</h2>
-      <p class="card-subtitle">Datos obtenidos desde la API de Nexar (Octopart).</p>
-      <div class="results-grid">
+    <div class="panel">
+      <h2 class="panel-title">Información técnica</h2>
+      <p class="panel-sub">Fuente: Nexar / Octopart.</p>
+
+      {% if resultados %}
+      <div class="row g-3">
         {% for dato in resultados %}
-        <article class="result-card">
-          <h3 class="result-card-mpn">{{ dato.mpn }}</h3>
-          <p class="result-card-manufacturer">{{ dato.manufacturer }}</p>
-          <p class="result-card-row">
-            <strong>Descripción</strong>
-            {{ dato.descripcion }}
-          </p>
-          <p class="result-card-row">
-            <strong>Categoría</strong>
-            {{ dato.categoria }}
-          </p>
-        </article>
+        <div class="col-md-6 col-lg-4">
+          <article class="result-card">
+            <p class="mpn">{{ dato.mpn }}</p>
+            <p class="maker">{{ dato.manufacturer }}</p>
+            <dl>
+              <dt>Descripción</dt>
+              <dd>{{ dato.descripcion }}</dd>
+              <dt>Categoría</dt>
+              <dd>{{ dato.categoria }}</dd>
+            </dl>
+          </article>
+        </div>
         {% endfor %}
       </div>
-    </div>
-    {% else %}
-    <div class="card">
-      <div class="empty-state">
-        <div class="empty-state-icon">ⓘ</div>
+      {% else %}
+      <div class="empty">
+        <i class="bi bi-info-circle"></i>
         <h3>Sin información adicional</h3>
-        <p>No se obtuvieron datos del proveedor para este componente.</p>
+        <p class="mb-0">No se obtuvieron datos del proveedor para este componente.</p>
       </div>
+      {% endif %}
     </div>
-    {% endif %}
   </section>
   {% endif %}
 </main>
+{% endblock %}
 
+{% block scripts %}
 <script>
   const dropzone = document.getElementById('dropzone');
   const input = document.getElementById('imagen-input');
@@ -95,41 +102,21 @@
   const analyzeBtn = document.getElementById('analyze-btn');
   const form = document.getElementById('upload-form');
 
-  function updateFilename(file) {
-    if (!file) return;
-    filenameLabel.textContent = `Archivo seleccionado: ${file.name}`;
-  }
+  const setName = f => { if (f) filenameLabel.textContent = 'Archivo: ' + f.name; };
 
-  ['dragenter', 'dragover'].forEach(evt => {
-    dropzone.addEventListener(evt, e => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropzone.classList.add('is-active');
-    });
-  });
-  ['dragleave', 'drop'].forEach(evt => {
-    dropzone.addEventListener(evt, e => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropzone.classList.remove('is-active');
-    });
-  });
-
+  ['dragenter','dragover'].forEach(ev => dropzone.addEventListener(ev, e => {
+    e.preventDefault(); dropzone.classList.add('is-active');
+  }));
+  ['dragleave','drop'].forEach(ev => dropzone.addEventListener(ev, e => {
+    e.preventDefault(); dropzone.classList.remove('is-active');
+  }));
   dropzone.addEventListener('drop', e => {
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      input.files = files;
-      updateFilename(files[0]);
-    }
+    if (e.dataTransfer.files.length) { input.files = e.dataTransfer.files; setName(input.files[0]); }
   });
-
-  input.addEventListener('change', () => {
-    if (input.files.length > 0) updateFilename(input.files[0]);
-  });
-
+  input.addEventListener('change', () => input.files[0] && setName(input.files[0]));
   form.addEventListener('submit', () => {
     analyzeBtn.disabled = true;
-    analyzeBtn.textContent = 'Analizando...';
+    analyzeBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Analizando...';
   });
 </script>
 {% endblock %}
