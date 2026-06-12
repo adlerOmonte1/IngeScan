@@ -35,13 +35,43 @@ from werkzeug.utils import secure_filename
 # ---------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
-UPLOAD_DIR = STATIC_DIR / "uploads"
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _writable_dir(*candidates: Path) -> Path:
+    """Devuelve el primer directorio creable/escribible de la lista."""
+    for cand in candidates:
+        try:
+            cand.mkdir(parents=True, exist_ok=True)
+            probe = cand / ".write_test"
+            probe.touch()
+            probe.unlink()
+            return cand
+        except OSError:
+            continue
+    # Último recurso: /tmp siempre debería existir
+    fallback = Path("/tmp/ingescan")
+    fallback.mkdir(parents=True, exist_ok=True)
+    return fallback
+
+
+# Ultralytics necesita un directorio de configuración escribible.
+# En contenedores con FS de solo-lectura (/root no escribible), apuntamos a /tmp.
+os.environ.setdefault("YOLO_CONFIG_DIR", "/tmp/Ultralytics")
+Path(os.environ["YOLO_CONFIG_DIR"]).mkdir(parents=True, exist_ok=True)
+
+# Directorio de uploads: dentro de static si se puede, si no en /tmp.
+UPLOAD_DIR = _writable_dir(STATIC_DIR / "uploads", Path("/tmp/ingescan/uploads"))
 
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 MAX_CONTENT_LENGTH = 8 * 1024 * 1024  # 8 MB
 
-DB_PATH = os.environ.get("DATABASE_PATH", str(BASE_DIR / "usuarios.db"))
+# Base de datos: respetar DATABASE_PATH si está definida, si no intentar BASE_DIR,
+# y como fallback /tmp para entornos con FS de solo lectura.
+_default_db_dir = _writable_dir(BASE_DIR, Path("/tmp/ingescan"))
+DB_PATH = os.environ.get("DATABASE_PATH", str(_default_db_dir / "usuarios.db"))
+# Asegurar que la carpeta destino del DB exista
+Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
+
 MODEL_PATH = os.environ.get("MODEL_PATH", str(BASE_DIR / "best.pt"))
 CONFIDENCE_THRESHOLD = float(os.environ.get("CONFIDENCE_THRESHOLD", "0.80"))
 
